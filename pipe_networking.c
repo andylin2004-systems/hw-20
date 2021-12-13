@@ -25,6 +25,8 @@ int server_handshake(int *to_client) {
   read(from_client, pidName, HANDSHAKE_BUFFER_SIZE);
   printf("server got: %s\n", pidName);
 
+  printf("from_client file indice: %d\n", from_client);
+
   return from_client;
 }
 
@@ -54,5 +56,8 @@ int client_handshake(int *to_server) {
   remove(pidName);
 
   write(*to_server, ACK, HANDSHAKE_BUFFER_SIZE);
+
+  printf("from_server file indice: %d\n", from_server);
+  
   return from_server;
 }
