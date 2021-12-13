@@ -11,7 +11,15 @@
   returns the file descriptor for the upstream pipe.
   =========================*/
 int server_handshake(int *to_client) {
-  int from_client = 0;
+  mkfifo(WKP, 0777);
+  int from_client = open(WKP, O_RDONLY, 0777);
+  char message[HANDSHAKE_BUFFER_SIZE];
+  read(from_client, message, HANDSHAKE_BUFFER_SIZE);
+  close(from_client);
+  char pidName[BUFFER_SIZE];
+  sprintf(pidName, "%d", getpid());
+  to_client = open(pidName, O_WRONLY, 0777);
+  write(to_client, ACK, HANDSHAKE_BUFFER_SIZE);
   return from_client;
 }
 
@@ -26,6 +34,14 @@ int server_handshake(int *to_client) {
   returns the file descriptor for the downstream pipe.
   =========================*/
 int client_handshake(int *to_server) {
-  int from_server = 0;
+  char pidName[BUFFER_SIZE];
+  sprintf(pidName, "%d", getpid());
+  to_server = open(WKP, O_WRONLY, 0777);
+  write(to_server, ACK, HANDSHAKE_BUFFER_SIZE);
+  int from_server = open(pidName, O_RDONLY, 0777);
+  char message[HANDSHAKE_BUFFER_SIZE];
+  read(from_server, message, HANDSHAKE_BUFFER_SIZE);
+  close(getpid());
+  write(to_server, ACK, HANDSHAKE_BUFFER_SIZE);
   return from_server;
 }
