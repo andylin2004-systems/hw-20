@@ -12,15 +12,19 @@
   =========================*/
 int server_handshake(int *to_client) {
   mkfifo(WKP, 0777);
+
   int from_client = open(WKP, O_RDONLY, 0777);
-  char message[HANDSHAKE_BUFFER_SIZE];
-  read(from_client, message, HANDSHAKE_BUFFER_SIZE);
-  printf("server got: %s\n", message);
-  close(from_client);
-  char pidName[BUFFER_SIZE];
-  sprintf(pidName, "%d", getpid());
+  char pidName[HANDSHAKE_BUFFER_SIZE];
+  read(from_client, pidName, HANDSHAKE_BUFFER_SIZE);
+  printf("server got: %s\n", pidName);
+  remove(WKP);
+
   *to_client = open(pidName, O_WRONLY, 0777);
   write(*to_client, ACK, HANDSHAKE_BUFFER_SIZE);
+
+  read(from_client, pidName, HANDSHAKE_BUFFER_SIZE);
+  printf("server got: %s\n", pidName);
+
   return from_client;
 }
 
@@ -37,13 +41,18 @@ int server_handshake(int *to_client) {
 int client_handshake(int *to_server) {
   char pidName[BUFFER_SIZE];
   sprintf(pidName, "%d", getpid());
+  mkfifo(pidName, 0777);
+
   *to_server = open(WKP, O_WRONLY, 0777);
-  write(*to_server, ACK, HANDSHAKE_BUFFER_SIZE);
-  int from_server = open(pidName, O_RDONLY, 0777);
+  write(*to_server, pidName, HANDSHAKE_BUFFER_SIZE);
+
   char message[HANDSHAKE_BUFFER_SIZE];
+  int from_server = open(pidName, O_RDONLY, 0777);
   read(from_server, message, HANDSHAKE_BUFFER_SIZE);
   printf("client got: %s\n", message);
-  close(getpid());
+  printf("client pid %d \n", getpid());
+  remove(pidName);
+
   write(*to_server, ACK, HANDSHAKE_BUFFER_SIZE);
   return from_server;
 }
